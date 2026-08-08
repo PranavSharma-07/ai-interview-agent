@@ -1,10 +1,10 @@
 const express = require("express");
+const { handleInterviewMessage } = require("../services/interviewService");
+
 const router = express.Router();
 
-const sessions = new Map();
-
 router.post("/", async (req, res) => {
-    const { sessionId, candidate, message } = req.body;
+    const { sessionId } = req.body;
 
     if (!sessionId) {
         return res.status(400).json({
@@ -12,34 +12,14 @@ router.post("/", async (req, res) => {
         });
     }
 
-    // Start interview
-    if (!sessions.has(sessionId)) {
-        sessions.set(sessionId, {
-            candidate,
-            messages: [],
-            questionCount: 0
-        });
-
-        return res.json({
-            reply: `Welcome ${candidate.name}. Let's begin your interview.`,
-            done: false
+    try {
+        const response = await handleInterviewMessage(req.body);
+        return res.json(response);
+    } catch (error) {
+        return res.status(500).json({
+            error: "Unable to process interview message"
         });
     }
-
-    // Existing interview
-    const session = sessions.get(sessionId);
-
-    session.messages.push({
-        role: "candidate",
-        content: message
-    });
-
-    session.questionCount++;
-
-    res.json({
-        reply: `I understand. This is question ${session.questionCount}.`,
-        done: false
-    });
 });
 
 module.exports = router;
