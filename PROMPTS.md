@@ -6,17 +6,21 @@ interview flow and API code stay small and easy to follow.
 ## Interview generation prompt
 
 `buildInterviewPrompt` asks the model to act as a friendly technical
-interviewer and return exactly one concise question. It includes the candidate
-profile, completed missions, the selected curriculum day and objectives, plus
-the full conversation. This prompt is responsible for generating each of the
+interviewer and return exactly one concise question. It uses the curriculum
+objectives as background for a technically meaningful question about design,
+implementation, trade-offs, metrics, or validation—not as wording to repeat.
+It includes the candidate profile, completed missions, selected curriculum day,
+and full conversation. This prompt is responsible for generating each of the
 eight interview questions.
 
 ## Follow-up prompt behavior
 
 The same `buildInterviewPrompt` includes the candidate's most recent answer
-and tells the model to use it for a natural follow-up when relevant. Full
-conversation history is included so each question can refer back to earlier
-answers without losing context.
+and tells the model to reference a specific claim from it when a follow-up is
+appropriate. It should probe reasoning, trade-offs, implementation details, or
+validation rather than merely say “building on your answer.” Full conversation
+history is included so each question can refer back to earlier answers without
+losing context.
 
 ## Feedback prompt
 

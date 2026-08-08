@@ -1,21 +1,28 @@
 const { buildInterviewPrompt, buildFeedbackPrompt } = require("../utils/promptBuilder");
 
 async function requestCompletion(prompt) {
-    if (!process.env.OPENAI_API_KEY || typeof fetch !== "function") {
+    const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY;
+    const baseUrl = process.env.DEEPSEEK_BASE_URL ||
+        process.env.OPENAI_BASE_URL ||
+        process.env.PENAI_BASE_URL ||
+        "https://api.openai.com/v1/chat/completions";
+    const model = process.env.DEEPSEEK_MODEL || process.env.OPENAI_MODEL || "gpt-4o-mini";
+
+    if (!apiKey || typeof fetch !== "function") {
         return null;
     }
 
     try {
         const response = await fetch(
-            process.env.OPENAI_BASE_URL || "https://api.openai.com/v1/chat/completions",
+            baseUrl,
             {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
+                    Authorization: `Bearer ${apiKey}`
                 },
                 body: JSON.stringify({
-                    model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+                    model,
                     messages: [{ role: "user", content: prompt }],
                     temperature: 0.5
                 })
@@ -23,22 +30,55 @@ async function requestCompletion(prompt) {
         );
 
         if (!response.ok) {
+            console.warn(`LLM request failed with status ${response.status}. Using fallback response.`);
             return null;
         }
 
         const data = await response.json();
         return data.choices?.[0]?.message?.content?.trim() || null;
-    } catch {
+    } catch (error) {
+        console.warn(`LLM request failed: ${error.message}. Using fallback response.`);
         return null;
     }
 }
 
-function fallbackQuestion({ topic, messages }) {
-    const previousAnswer = messages.filter((message) => message.role === "candidate").at(-1)?.content;
-    const objective = topic.objectives[0];
-    const followUp = previousAnswer ? " Building on your previous answer," : "";
+function getPreviousAnswer(messages) {
+    return messages.filter((message) => message.role === "candidate").at(-1)?.content?.trim();
+}
 
-    return `${followUp} how would you apply ${objective.toLowerCase()} when working with ${topic.title}?`;
+function getAnswerExcerpt(answer) {
+    const compactAnswer = answer.replace(/\s+/g, " ");
+    return compactAnswer.length > 140 ? `${compactAnswer.slice(0, 137)}...` : compactAnswer;
+}
+
+function fallbackTopicQuestion(topic, questionNumber) {
+    const topicName = topic.title.toLowerCase();
+    const templates = [
+        `Walk me through how you would design ${topicName} for a production application. Which technical choices would you make and why?`,
+        `What trade-offs would you evaluate when implementing ${topicName}, and how would you test your approach?`,
+        `Imagine this feature is failing in production: how would you diagnose and improve ${topicName}?`,
+        `What would a reliable implementation of ${topicName} look like, and which metrics would you use to validate it?`
+    ];
+
+    return templates[(questionNumber - 1) % templates.length];
+}
+
+function fallbackQuestion({ topic, messages, questionNumber }) {
+    const previousAnswer = getPreviousAnswer(messages);
+
+    if (previousAnswer) {
+        const excerpt = getAnswerExcerpt(previousAnswer);
+        const followUps = [
+            `You mentioned "${excerpt}". For ${topic.title}, what trade-off did that approach introduce, and how would you validate the decision?`,
+            `In your answer, you said "${excerpt}". How would you implement that approach for ${topic.title}, and what would you test first?`,
+            `You described "${excerpt}". What assumption would you challenge before using that approach in ${topic.title}?`,
+            `You proposed "${excerpt}". What failure mode would concern you most in ${topic.title}, and how would you mitigate it?`
+        ];
+
+        return followUps[(questionNumber - 1) % followUps.length];
+    }
+
+    return fallbackTopicQuestion(topic, questionNumber);
 }
 
 function fallbackFeedback({ topics, messages }) {
