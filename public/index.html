@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Interview Demo</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <main class="page">
+        <section class="card">
+            <h1>AI Interview Demo</h1>
+            <p class="hint">Use a candidate ID from the sample data, such as <code>CAND-001</code>.</p>
+
+            <form id="start-form" class="start-form">
+                <label for="candidate-id">Candidate ID</label>
+                <div class="input-row">
+                    <input id="candidate-id" name="candidateId" value="CAND-001" required>
+                    <button type="submit">Start Interview</button>
+                </div>
+            </form>
+
+            <p id="status" class="status" aria-live="polite">Enter a candidate ID to begin.</p>
+
+            <section id="interview" class="hidden" aria-live="polite">
+                <div class="progress-row">
+                    <strong id="progress">Ready to begin</strong>
+                    <span id="session-label"></span>
+                </div>
+
+                <div class="message-box">
+                    <p class="message-label">Interviewer</p>
+                    <p id="question">Welcome. Let's begin your interview.</p>
+                </div>
+
+                <form id="answer-form">
+                    <label for="answer">Your answer</label>
+                    <textarea id="answer" rows="6" required placeholder="Type your answer here..."></textarea>
+                    <button id="submit-answer" type="submit">Submit Answer</button>
+                </form>
+            </section>
+
+            <section id="feedback" class="hidden">
+                <h2>Interview Feedback</h2>
+                <p id="feedback-summary"></p>
+                <div class="feedback-grid">
+                    <div><h3>Strengths</h3><ul id="strengths"></ul></div>
+                    <div><h3>Gaps</h3><ul id="gaps"></ul></div>
+                    <div><h3>Next steps</h3><ul id="next"></ul></div>
+                </div>
+            </section>
+        </section>
+    </main>
+    <script src="app.js"></script>
+</body>
+</html>

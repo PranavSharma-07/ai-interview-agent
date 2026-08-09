@@ -5,6 +5,7 @@ const interviewRoute = require("./routes/interview.js");
 const app = express();
 
 app.use(express.json());
+app.use("/demo", express.static("public"));
 app.use("/api/interview", interviewRoute);
 
 app.get("/", (req, res) => {

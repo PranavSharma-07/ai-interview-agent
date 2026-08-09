@@ -1,4 +1,4 @@
-const { buildInterviewPrompt, buildFeedbackPrompt } = require("../utils/promptBuilder");
+const { isMeaningfulAnswer, buildInterviewPrompt, buildFeedbackPrompt } = require("../utils/promptBuilder");
 
 async function requestCompletion(prompt) {
     const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY;
@@ -51,22 +51,60 @@ function getAnswerExcerpt(answer) {
     return compactAnswer.length > 140 ? `${compactAnswer.slice(0, 137)}...` : compactAnswer;
 }
 
-function fallbackTopicQuestion(topic, questionNumber) {
-    const topicName = topic.title.toLowerCase();
+function getCandidateDetails(profile) {
+    const member = profile?.member || profile || {};
+    const completedMissions = (profile?.missions || [])
+        .filter((mission) => mission.passed)
+        .slice(0, 2)
+        .map((mission) => mission.title);
+
+    return {
+        role: member.jobRole || "technical professional",
+        experience: member.yearsExperience != null
+            ? `${member.yearsExperience} years of experience`
+            : "your experience",
+        completedMissions
+    };
+}
+
+function getTopicFocus(topic) {
+    const title = topic.title.toLowerCase();
+
+    if (title.includes("embedding")) return "an embedding and retrieval strategy";
+    if (title.includes("vector database")) return "a vector database layer";
+    if (title.includes("retrieval")) return "a retrieval and matching pipeline";
+    if (title.includes("prompt")) return "a prompt design and evaluation workflow";
+    if (title.includes("chatbot backend")) return "a chatbot backend API";
+    if (title.includes("multi-agent")) return "a multi-agent workflow";
+    if (title.includes("model context protocol")) return "an MCP tool integration";
+    if (title.includes("docker") || title.includes("kubernetes")) return "a containerized deployment";
+
+    return `a production-ready ${title} solution`;
+}
+
+function fallbackTopicQuestion(topic, questionNumber, profile) {
+    const topicFocus = getTopicFocus(topic);
+    const candidate = getCandidateDetails(profile);
+    const missionContext = candidate.completedMissions.length
+        ? ` and your completed work on ${candidate.completedMissions.join(" and ")}`
+        : "";
+    const opening = questionNumber === 1
+        ? `Given your ${candidate.experience} as a ${candidate.role}${missionContext}, `
+        : "";
     const templates = [
-        `Walk me through how you would design ${topicName} for a production application. Which technical choices would you make and why?`,
-        `What trade-offs would you evaluate when implementing ${topicName}, and how would you test your approach?`,
-        `Imagine this feature is failing in production: how would you diagnose and improve ${topicName}?`,
-        `What would a reliable implementation of ${topicName} look like, and which metrics would you use to validate it?`
+        `${opening}walk me through how you would design ${topicFocus}. Which technical choices would you make and why?`,
+        `${opening}what trade-offs would you evaluate when implementing ${topicFocus}, and how would you test your approach?`,
+        `${opening}imagine this feature is failing in production: how would you diagnose and improve ${topicFocus}?`,
+        `${opening}what would a reliable implementation of ${topicFocus} look like, and which metrics would you use to validate it?`
     ];
 
     return templates[(questionNumber - 1) % templates.length];
 }
 
-function fallbackQuestion({ topic, messages, questionNumber }) {
+function fallbackQuestion({ topic, profile, messages, questionNumber }) {
     const previousAnswer = getPreviousAnswer(messages);
 
-    if (previousAnswer) {
+    if (isMeaningfulAnswer(previousAnswer)) {
         const excerpt = getAnswerExcerpt(previousAnswer);
         const followUps = [
             `You mentioned "${excerpt}". For ${topic.title}, what trade-off did that approach introduce, and how would you validate the decision?`,
@@ -78,7 +116,7 @@ function fallbackQuestion({ topic, messages, questionNumber }) {
         return followUps[(questionNumber - 1) % followUps.length];
     }
 
-    return fallbackTopicQuestion(topic, questionNumber);
+    return fallbackTopicQuestion(topic, questionNumber, profile);
 }
 
 function fallbackFeedback({ topics, messages }) {
