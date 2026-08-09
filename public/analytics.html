@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interview Analytics Dashboard</title>
+    <link rel="stylesheet" href="css/analytics.css">
+</head>
+<body>
+    <main class="dashboard">
+        <header class="dashboard-header">
+            <div>
+                <p class="eyebrow">AI-powered performance insights</p>
+                <h1>Interview Analytics Dashboard</h1>
+            </div>
+            <button id="back-button" class="back-button" type="button">← Back</button>
+        </header>
+
+
+        <section class="feedback-section" aria-labelledby="feedback-heading">
+            <div class="section-heading">
+                <p class="eyebrow">Interview feedback</p>
+                <h2 id="feedback-heading">Your feedback</h2>
+            </div>
+
+            <article class="card summary-card">
+                <h3>Summary</h3>
+                <p id="feedback-summary" class="card-copy">No interview feedback is available for this session yet.</p>
+            </article>
+
+            <div class="feedback-grid">
+                <article class="card"><h3>Strengths</h3><ul id="strengths" class="feedback-list"></ul></article>
+                <article class="card"><h3>Areas to Improve</h3><ul id="gaps" class="feedback-list"></ul></article>
+                <article class="card"><h3>Recommended Next Steps</h3><ol id="next-steps" class="feedback-list numbered"></ol></article>
+            </div>
+        </section>
+    </main>
+    <script src="js/analytics.js"></script>
+</body>
+</html>

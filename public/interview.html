@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interview | AI Interview Agent</title>
+    <link rel="stylesheet" href="css/interview.css">
+</head>
+<body>
+    <main class="interview-layout">
+        <aside class="sidebar">
+            <a class="brand" href="index.html">AI Interview Agent</a>
+
+            <section class="candidate-details" aria-label="Candidate details">
+                <p class="section-label">Candidate</p>
+                <h1 id="candidate-name">Preparing your interview</h1>
+                <p id="candidate-role">Personalized technical interview</p>
+            </section>
+
+            <section class="progress-section" aria-label="Interview progress">
+                <p class="section-label">Interview progress</p>
+                <p id="progress-label" class="progress-label">Question 1 of 8</p>
+                <div class="progress-track" role="progressbar" aria-label="Interview progress" aria-valuemin="0" aria-valuemax="8" aria-valuenow="0">
+                    <span id="progress-bar"></span>
+                </div>
+            </section>
+
+            <section class="topic-section">
+                <p class="section-label">Current topic</p>
+                <p id="current-topic">Curriculum-selected topic</p>
+            </section>
+        </aside>
+
+        <section class="main-panel" aria-live="polite">
+            <div id="interview-view">
+                <header class="question-header">
+                    <p id="question-meta">Question 1 of 8 <span aria-hidden="true">·</span> Interview</p>
+                </header>
+
+                <article class="question-card">
+                    <p class="interviewer-label">AI interviewer</p>
+                    <h2 id="question-text">Preparing your personalized question...</h2>
+                </article>
+
+                <form id="answer-form" class="answer-form">
+                    <label for="answer">Your answer</label>
+                    <textarea id="answer" rows="9" placeholder="Type your answer here..." required></textarea>
+                    <div class="form-footer">
+                        <p id="status" class="status" role="status"></p>
+                        <button id="submit-answer" type="submit">Submit Answer <span aria-hidden="true">→</span></button>
+                    </div>
+                </form>
+            </div>
+
+            <section id="completion-view" class="completion-view" hidden>
+                <p class="completion-kicker">Interview complete</p>
+                <h2>Thanks for practicing with us.</h2>
+                <div class="feedback-card">
+                    <h3>Summary</h3>
+                    <p id="feedback-summary"></p>
+                </div>
+                <div class="feedback-grid">
+                    <section class="feedback-card"><h3>Strengths</h3><ul id="strengths"></ul></section>
+                    <section class="feedback-card"><h3>Gaps</h3><ul id="gaps"></ul></section>
+                    <section class="feedback-card"><h3>Next Steps</h3><ul id="next-steps"></ul></section>
+                </div>
+            </section>
+        </section>
+    </main>
+    <script src="js/interview.js"></script>
+</body>
+</html>
