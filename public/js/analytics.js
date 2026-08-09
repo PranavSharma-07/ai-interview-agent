@@ -30,7 +30,7 @@ function renderFeedback(feedback) {
 }
 
 document.querySelector("#back-button").addEventListener("click", () => {
-    window.location.href = document.referrer || "/";
+window.location.href = "/";
 });
 
 const storedResult = readStoredJson("aiInterviewResult");
