@@ -16,8 +16,9 @@ router.post("/", async (req, res) => {
         const response = await handleInterviewMessage(req.body);
         return res.json(response);
     } catch (error) {
-        return res.status(500).json({
-            error: "Unable to process interview message"
+        const status = error.status || 500;
+        return res.status(status).json({
+            error: status === 400 ? error.message : "Unable to process interview message"
         });
     }
 });

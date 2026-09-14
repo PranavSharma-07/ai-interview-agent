@@ -119,13 +119,33 @@ function fallbackQuestion({ topic, profile, messages, questionNumber }) {
     return fallbackTopicQuestion(topic, questionNumber, profile);
 }
 
+function scoreFromAnswers(answers) {
+    if (!answers.length) return 50;
+
+    const wordCounts = answers.map((answer) => answer.content.trim().split(/\s+/).filter(Boolean).length);
+    const averageWords = wordCounts.reduce((sum, count) => sum + count, 0) / wordCounts.length;
+
+    return Math.max(35, Math.min(95, Math.round(35 + averageWords * 1.2)));
+}
+
 function fallbackFeedback({ topics, messages }) {
-    const answers = messages.filter((message) => message.role === "candidate");
+    const answers = messages.filter((message) => message.role === "candidate" && message.content?.trim());
     const coveredDays = topics.map((topic) => topic.day).join(", ");
-    const detailedAnswers = answers.filter((answer) => answer.content?.trim().length >= 40).length;
+    const detailedAnswers = answers.filter((answer) => answer.content.trim().length >= 40).length;
+    const score = scoreFromAnswers(answers);
 
     return {
         summary: `Completed an eight-question interview covering curriculum days ${coveredDays}.`,
+        score,
+        skills: [
+            { name: "Technical Depth", rating: score },
+            { name: "Communication Clarity", rating: Math.max(30, score - 5) },
+            { name: "Problem Solving", rating: Math.max(30, score - 10) },
+            {
+                name: "Trade-off Analysis",
+                rating: detailedAnswers ? Math.min(95, score + 5) : Math.max(30, score - 15)
+            }
+        ],
         strengths: [
             "Completed the curriculum missions selected for this interview.",
             detailedAnswers ? "Provided detail in several interview responses." : "Engaged with each interview topic."
@@ -143,6 +163,19 @@ async function generateInterviewQuestion(context) {
     return question || fallbackQuestion(context);
 }
 
+function clampRating(value) {
+    return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+function normalizeSkills(skills) {
+    if (!Array.isArray(skills)) return [];
+
+    return skills
+        .filter((skill) => skill && typeof skill.name === "string" && typeof skill.rating === "number")
+        .map((skill) => ({ name: skill.name, rating: clampRating(skill.rating) }))
+        .slice(0, 4);
+}
+
 function parseFeedback(content) {
     try {
         const feedback = JSON.parse(content);
@@ -151,7 +184,13 @@ function parseFeedback(content) {
                 Array.isArray(feedback[field]) && feedback[field].every((item) => typeof item === "string")
             );
 
-        return hasExpectedShape ? feedback : null;
+        if (!hasExpectedShape) return null;
+
+        return {
+            ...feedback,
+            score: typeof feedback.score === "number" ? clampRating(feedback.score) : undefined,
+            skills: normalizeSkills(feedback.skills)
+        };
     } catch {
         return null;
     }
